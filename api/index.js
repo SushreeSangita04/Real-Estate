@@ -4,6 +4,16 @@ import dotenv from 'dotenv'
 import userRouter from './routes/user.route.js';
 import authRouter from './routes/auth.route.js';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+
+const corsOptions = {
+  origin: 'http://localhost:5173',  // Your frontend URL
+  credentials: true,  // Allow cookies to be sent with requests
+};
+
+
+
+
 dotenv.config();
 mongoose.connect(process.env.MONGO).then(()=>{
     console.log('Connected to mongoDB');
@@ -19,7 +29,7 @@ app.listen(3000, () => {
 });
 app.use("/api/user",userRouter);
 app.use("/api/auth",authRouter);
-
+app.use(cors(corsOptions));
 //middleware
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;
