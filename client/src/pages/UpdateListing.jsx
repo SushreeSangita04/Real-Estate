@@ -1,11 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getStorage, uploadBytesResumable, ref, getDownloadURL } from 'firebase/storage';
 import { app } from '../firebase';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 export default function CreateListing() {
     const { currentUser } = useSelector(state => state.user);
     const navigate = useNavigate();
+    const params = useParams();
     //  const [files,setFiles]=useState([]);
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -23,6 +24,19 @@ export default function CreateListing() {
         furnished: false,
         imageUrls: []
     });
+    useEffect(() => {
+        const fetchListing = async () => {
+            const ListingId = params.ListingId;
+            const res=await fetch(`/api/listing/get/${ListingId}`);
+            const data=await res.json();
+            if(data.success===false){
+                console.log(data.message);
+                return;
+            }
+            setFormData(data);
+        }
+        fetchListing();
+    }, []);
     const handleChange = (e) => {
         if (e.target.id === 'sale' || e.target.id === 'rent') {
             setFormData({
@@ -50,7 +64,7 @@ export default function CreateListing() {
                 return setError('Discounted price must be lower than regular price');
             setLoading(true);
             setError(false);
-            const res = await fetch('/api/listing/create', {
+            const res = await fetch(`/api/listing/update/${params.ListingId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,13 +118,13 @@ export default function CreateListing() {
 
     return (
         <main className='max-w-4xl p-3 mx-auto'>
-            <h1 className='text-3xl font-semibold text-center my-7'>Create a Listing</h1>
+            <h1 className='text-3xl font-semibold text-center my-7'>Update a Listing</h1>
             <form onSubmit={handleSubmit} className='flex flex-col gap-4 sm:flex-row'>
                 <div className='flex flex-col flex-1 gap-4'>
-                <p className='font-semibold'>Images:
+                    <p className='font-semibold'>Images:
                         <span className='ml-2 font-normal text-gray-600'>The first image will be the cover (max 6)</span>
                     </p>
-                <div className='flex gap-4'>
+                    <div className='flex gap-4'>
                         {/* <input type="file" id="imageUpload" name="imageUpload" accept="image/*"/> */}
                         <input onChange={handleImageUpload} className='w-full p-3 border border-gray-300 rounded' type='file' id='images' accept='image/*' multiple />
                         {/* <input type="submit" value="Upload"/>  */}
@@ -121,7 +135,7 @@ export default function CreateListing() {
                     <input type='text' onChange={handleChange} value={formData.name} placeholder='Name' className='p-3 border rounded-lg' id='name' maxLength='62' minLength='10' required />
                     <textarea type='text' onChange={handleChange} value={formData.description} placeholder='Description' className='p-3 border rounded-lg' id='description' required />
                     <input type='text' onChange={handleChange} value={formData.address} placeholder='Address' className='p-3 border rounded-lg' id='address' required />
-                    
+
                     <div className='flex flex-wrap gap-6 '>
                         <div className='flex gap-2'>
                             <input onChange={handleChange} checked={formData.type === 'sale'} type='checkbox' id='sale' className='w-5'></input>
@@ -180,22 +194,22 @@ export default function CreateListing() {
                         <p className='text-sm text-green-700'>Wait for 2 mins for the image to upload</p>
                         </div> */}
                     <div className="flex items-center gap-2">
-                            <input type='number' onChange={handleChange} value={formData.regularPrice} id='regularPrice' min='50' max='10000000' required className='p-3 border border-gray-300 rounded-lg' />
+                        <input type='number' onChange={handleChange} value={formData.regularPrice} id='regularPrice' min='50' max='10000000' required className='p-3 border border-gray-300 rounded-lg' />
+                        <div className=''>
+                            <p>Regular price</p>
+                            <span className='text-xs'>($ / month)</span>
+                        </div>
+                    </div>
+                    {formData.offer && (
+                        <div className="flex items-center gap-2">
+                            <input type='number' onChange={handleChange} value={formData.discountPrice} id='discountPrice' min='0' max='10000000' required className='p-3 border border-gray-300 rounded-lg' />
                             <div className=''>
-                                <p>Regular price</p>
+                                <p>Discounted price</p>
                                 <span className='text-xs'>($ / month)</span>
                             </div>
                         </div>
-                        {formData.offer && (
-                            <div className="flex items-center gap-2">
-                                <input type='number' onChange={handleChange} value={formData.discountPrice} id='discountPrice' min='0' max='10000000' required className='p-3 border border-gray-300 rounded-lg' />
-                                <div className=''>
-                                    <p>Discounted price</p>
-                                    <span className='text-xs'>($ / month)</span>
-                                </div>
-                            </div>
-                        )}
-                    <button disabled={loading} className='p-3 text-white uppercase rounded-lg bg-slate-700 hover:opacity-95 disabled:opacity-80'>{loading ? 'Creating...' : 'Create Listing'}</button>
+                    )}
+                    <button disabled={loading} className='p-3 text-white uppercase rounded-lg bg-slate-700 hover:opacity-95 disabled:opacity-80'>{loading ? 'Updating...' : 'Update Listing'}</button>
                     {error && <p className='text-sm text-red-700'>{error}</p>}
                 </div>
             </form>
