@@ -6,13 +6,17 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css/bundle';
 import { FaShare, FaBath, FaBed, FaChair, FaMapMarkedAlt, FaMapMarkerAlt, FaParking } from 'react-icons/fa';
 import { list } from 'firebase/storage';
+import { useSelector } from 'react-redux';
+import Contact from '../Components/Contact';
 export default function Listing() {
   SwiperCore.use([Navigation]);
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [contact,setContact]=useState(false);
   const params = useParams();
+  const { currentUser } = useSelector((state) => state.user);
   useEffect(() => {
     const fetchListing = async () => {
       try {
@@ -91,21 +95,25 @@ export default function Listing() {
             <ul className='flex flex-wrap items-center gap-4 text-sm font-semibold text-green-900 sm:gap-6'>
               <li className='flex items-center gap-1 whitespace-nowrap '>
                 <FaBed className='text-lg'></FaBed>
-                {listing.bedrooms>1?`${listing.bedrooms} beds`:`${listing.bedrooms} bed`}
+                {listing.bedrooms > 1 ? `${listing.bedrooms} beds` : `${listing.bedrooms} bed`}
               </li>
               <li className='flex items-center gap-1 whitespace-nowrap '>
                 <FaBath className='text-lg'></FaBath>
-                {listing.bathrooms>1?`${listing.bathrooms} baths`:`${listing.bathrooms} bath`}
+                {listing.bathrooms > 1 ? `${listing.bathrooms} baths` : `${listing.bathrooms} bath`}
               </li>
               <li className='flex items-center gap-1 whitespace-nowrap '>
                 <FaParking className='text-lg'></FaParking>
-                {listing.parking?'Parking available':'No parking'}
+                {listing.parking ? 'Parking available' : 'No parking'}
               </li>
               <li className='flex items-center gap-1 whitespace-nowrap '>
                 <FaChair className='text-lg'></FaChair>
-                {listing.furnished?'Furnished':'Unfurnished'}
+                {listing.furnished ? 'Furnished' : 'Unfurnished'}
               </li>
             </ul>
+            {currentUser && listing.userRef !== currentUser._id && !contact && (
+              <button onClick={()=>setContact(true)} className='p-3 mt-4 text-white uppercase rounded-lg bg-slate-700 hover:opacity-95'>Contact Landlord</button>
+            )}
+            {contact && <Contact listing={listing}/>}
           </div>
         </div>
       }
