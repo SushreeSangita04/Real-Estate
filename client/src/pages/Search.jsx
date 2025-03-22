@@ -3,9 +3,9 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import ListingItem from '../Components/ListingItem';
 export default function Search() {
     const navigate = useNavigate();
-    const [loading,setLoading]=useState(false);
-    const [listings,setListings]=useState([]);
-    console.log(listings);
+    const [loading, setLoading] = useState(false);
+    const [listings, setListings] = useState([]);
+    const [showMore, setShowMore] = useState(false);
     const [sidebardata, setSidebardata] = useState({
         searchTerm: '',
         type: 'all',
@@ -37,17 +37,22 @@ export default function Search() {
             });
         }
         //fetch listing according to search from database(using getListings API)
-        const fetchListings=async()=>{
-           setLoading(true);
-           const searchQuery=urlParams.toString();
-           const res=await fetch(`/api/listing/get?${searchQuery}`);
-           const data=await res.json();
-           setListings(data);
-           setLoading(false);
-
+        const fetchListings = async () => {
+            setLoading(true);
+            setShowMore(false)
+            const searchQuery = urlParams.toString();
+            const res = await fetch(`/api/listing/get?${searchQuery}`);
+            const data = await res.json();
+            if (data.length > 8) {
+                setShowMore(true);
+            }
+            else{
+                setShowMore(false);
+            }
+            setListings(data);
+            setLoading(false);
         }
         fetchListings();
-
     }, [location.search]);
     const handleChange = (e) => {
         if (e.target.id === 'all' || e.target.id === 'rent' || e.target.id === 'sale')
@@ -76,6 +81,18 @@ export default function Search() {
         const searchQuery = urlParams.toString();
         navigate(`/search?${searchQuery}`);//navigates to search page(described as in the App.jsx page) Also described in Header.jsx page
 
+    }
+    const onShowMoreClick=async()=>{
+        const numberOfListings=listings.length;
+        const startIndex=numberOfListings;
+        const urlParams=new URLSearchParams(location.search);
+        urlParams.set('startIndex',startIndex);
+        const searchQuery=urlParams.toString();
+        const res=await fetch(`/api/listing/get?${searchQuery}`);
+        const data=await res.json();
+        if(data.length<9)
+            setShowMore(false)
+        setListings([...listings,...data]);
     }
     return (
         <div className='flex flex-col md:flex-row'>
@@ -132,18 +149,18 @@ export default function Search() {
             <div className="flex-1">
                 <h1 className='p-3 mt-5 text-3xl font-semibold border-b text-slate-700'>Listing results:</h1>
                 <div className="flex flex-wrap gap-4 p-7">
-                    {!loading && listings.length==0 && (
+                    {!loading && listings.length == 0 && (
                         <p className='text-xl text-slate-700'>No Listing Found.</p>
                     )}
                     {loading && (
                         <p className='w-full text-xl text-center text-slate-700'>Loading...</p>
                     )
                     }
-                    {
-                        !loading && listings && listings.map((listing)=>(
-                            <ListingItem key={listing._id} listing={listing}/>
+                    {!loading && listings && listings.map((listing) => (
+                            <ListingItem key={listing._id} listing={listing} />
                         ))
                     }
+                    {showMore && (<button className='w-full text-center text-green-700 hover:underline p-7' onClick={onShowMoreClick}>Show More</button>)}
                 </div>
             </div>
         </div>
